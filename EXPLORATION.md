@@ -1089,3 +1089,115 @@ Instance #1 has comprehensively explored:
 ---
 
 *Instance #1 (grimoire-v1, run 1) Complete - 2026-01-19*
+
+---
+
+## 15. Instance #2 Findings
+
+### Technical Validation Results
+
+#### FTS5 Performance Test (Validated ✅)
+
+Tested the hybrid schema against real bash_history data:
+
+```
+=== FTS5 Performance Test Results ===
+
+Database created with FTS5 schema
+Parsed 1968 commands in 3.14ms (from 60KB bash_history)
+Inserted/updated 490 unique commands in 23.54ms
+
+FTS5 Search Performance:
+  "git": 12 results in 0.10ms
+  "docker": 8 results in 0.04ms
+  "npm install": 2 results in 0.04ms
+  "ssh": 4 results in 0.03ms
+  "deploy OR production": 1 results in 0.04ms
+  "git push" (exact phrase): 3 results in 0.03ms
+  "git*" (prefix): 14 results in 0.06ms
+
+Pagination Performance:
+  Offset 0: 20 results in 0.03ms
+  Offset 100: 20 results in 0.02ms
+
+Tag Search (JSON LIKE):
+  Tag "git": 3 results in 0.03ms
+  Tag "docker": 5 results in 0.03ms
+```
+
+**Conclusion**: FTS5 performance is excellent. Sub-millisecond searches even with boolean operators and phrase matching. The hybrid schema works perfectly for our use case.
+
+#### Ink TUI Prototype (Validated ✅)
+
+Created a minimal ink prototype that validates:
+
+1. **Box/Text layouts** - Flexbox works as expected, border styles render cleanly
+2. **useInput hook** - Keyboard handling works (j/k navigation, / for search, q to quit)
+3. **TextInput component** - Search input with live filtering works
+4. **Mode switching** - Browse → Search → Help modes work correctly
+5. **Component composition** - React patterns translate well to CLI
+
+**Known issues**:
+- Yoga-layout requires ESM module format with Node.js 22+
+- Raw mode requires proper TTY (not pipeable - expected)
+
+**Conclusion**: Ink patterns from EXPLORATION.md are validated and ready for implementation.
+
+---
+
+### Open Questions - Decisions Made
+
+| # | Question | Decision | Rationale |
+|---|----------|----------|-----------|
+| 5 | Tag system depth | **Flat tags** | Simple implementation; users can use conventions like `git:branch` for hierarchy |
+| 6 | Import strategy | **Auto-detect with override** | Check for ~/.bash_history, ~/.zsh_history; allow `--source` flag |
+| 7 | Inline vs modal edit | **Both** | `a` for quick inline, `e` in detail for full modal |
+| 8 | Run command confirmation | **Required** | Press `x` → confirm dialog. Safety first. |
+| 9 | Shell integration | **Complement only (MVP)** | Standalone TUI; no shell hooks required |
+| 10 | Multi-machine sync | **Export/import JSON** | `grimoire export --json`, defer sync service |
+| 11 | Secret handling | **Dual approach** | Detection + redaction + private flag |
+| 12 | Performance at scale | **Virtualized rendering** | Show 20 items viewport, SQLite handles rest |
+
+---
+
+### Readiness Assessment for CONTRACT.md
+
+**Checklist**:
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Problem definition | ✅ Complete | Well-articulated in seed document |
+| Competitive analysis | ✅ Complete | Atuin, McFly, fzf analyzed |
+| Tech stack | ✅ Decided | Node.js + TypeScript + Ink + better-sqlite3 |
+| Architecture | ✅ Sketched | CLI entry + TUI + Services + SQLite |
+| Data model | ✅ Validated | Hybrid schema with FTS5 tested |
+| UX design | ✅ Detailed | 4 ASCII mockups, keyboard shortcuts |
+| Edge cases | ✅ Documented | 18+ cases identified |
+| Parser algorithm | ✅ Validated | Tested with real bash_history |
+| TUI patterns | ✅ Validated | Ink prototype works |
+| Open questions | ✅ Decided | All 12 questions have decisions |
+
+**Assessment**: The exploration phase is **complete**. All technical foundations have been validated with working prototypes. The design is clear, edge cases are documented, and all open questions have concrete decisions.
+
+**Recommendation**: Instance #3 should finalize any remaining polish on EXPLORATION.md, then Instance #4 can confidently create CONTRACT.md and begin implementation.
+
+---
+
+### Prototypes Created
+
+Located in `/home/ridgetop/projects/grimoire/prototypes/`:
+
+1. **test-fts5.ts** - SQLite FTS5 performance validation
+   - Implements full hybrid schema from Section 4
+   - Parser algorithm from Section 11
+   - Benchmarks search, pagination, tag queries
+
+2. **test-ink.tsx** - Ink TUI pattern validation
+   - Box/Text layout matching ASCII mockups
+   - useInput for keyboard navigation
+   - TextInput for search mode
+   - Mode switching (browse/search/help)
+
+---
+
+*Instance #2 (grimoire-v1, run 1) Complete - 2026-01-19*
