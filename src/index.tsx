@@ -7,9 +7,9 @@
  */
 
 import { render } from 'ink';
-import { App } from './ui/App.js';
+import { GrimoireApp } from './ui/GrimoireApp.js';
 import { getDatabase, closeDatabase } from './db/index.js';
-import { getDatabasePath, ensureDirectories } from './services/Config.js';
+import { getDatabasePath, ensureDirectories, isFirstRun } from './services/Config.js';
 
 /**
  * Launch the TUI application
@@ -18,8 +18,9 @@ export function launchTUI(): void {
   ensureDirectories();
   const dbPath = getDatabasePath();
   const db = getDatabase(dbPath);
+  const firstRun = isFirstRun();
 
-  const { waitUntilExit } = render(<App db={db} />);
+  const { waitUntilExit } = render(<GrimoireApp db={db} isFirstRun={firstRun} />);
 
   waitUntilExit().then(() => {
     closeDatabase();

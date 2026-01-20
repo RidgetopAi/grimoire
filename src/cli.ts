@@ -36,16 +36,7 @@ program
 
     ensureDirectories();
 
-    if (isFirstRun()) {
-      console.log('📖 Welcome to Grimoire!');
-      console.log();
-      console.log('Your spell book is empty. Import your command history to get started:');
-      console.log('  grimoire import');
-      console.log();
-      return;
-    }
-
-    // Launch TUI
+    // Launch TUI - Welcome screen handles first-run experience
     launchTUI();
   });
 
@@ -315,14 +306,41 @@ program
       process.exit(1);
     }
 
-    if (options.command) {
-      console.log(`Annotating command: "${options.command}"`);
-    } else {
-      console.log(`Annotating command ID: ${id}`);
+    const db = getDatabase(getDatabasePath());
+
+    try {
+      const store = new CommandStore(db);
+      let command;
+
+      if (options.command) {
+        command = store.getByCommand(options.command);
+        if (!command) {
+          console.error(`Command not found: "${options.command}"`);
+          process.exit(1);
+        }
+      } else {
+        const commandId = parseInt(id, 10);
+        if (isNaN(commandId)) {
+          console.error(`Invalid ID: ${id}`);
+          process.exit(1);
+        }
+        command = store.getById(commandId);
+        if (!command) {
+          console.error(`Command not found with ID: ${id}`);
+          process.exit(1);
+        }
+      }
+
+      store.updateAnnotation(command.id, note);
+      console.log(`Annotated command #${command.id}:`);
+      console.log(`  Command: ${command.command.slice(0, 60)}${command.command.length > 60 ? '...' : ''}`);
+      console.log(`  Note: ${note}`);
+    } catch (error) {
+      console.error('Annotation failed:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
     }
-    console.log(`Note: "${note}"`);
-    console.log();
-    console.log('Annotation functionality coming in Phase 4.');
   });
 
 // Tag command
@@ -337,10 +355,37 @@ program
       process.exit(1);
     }
 
-    console.log(`Tagging command ID: ${id}`);
-    console.log(`Tags: ${tags.join(', ')}`);
-    console.log();
-    console.log('Tagging functionality coming in Phase 4.');
+    const commandId = parseInt(id, 10);
+    if (isNaN(commandId)) {
+      console.error(`Invalid ID: ${id}`);
+      process.exit(1);
+    }
+
+    const db = getDatabase(getDatabasePath());
+
+    try {
+      const store = new CommandStore(db);
+      const command = store.getById(commandId);
+
+      if (!command) {
+        console.error(`Command not found with ID: ${id}`);
+        process.exit(1);
+      }
+
+      // Merge with existing tags
+      const existingTags = command.tags ?? [];
+      const newTags = [...new Set([...existingTags, ...tags])];
+
+      store.updateTags(command.id, newTags);
+      console.log(`Tagged command #${command.id}:`);
+      console.log(`  Command: ${command.command.slice(0, 60)}${command.command.length > 60 ? '...' : ''}`);
+      console.log(`  Tags: ${newTags.join(', ')}`);
+    } catch (error) {
+      console.error('Tagging failed:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
+    }
   });
 
 program.parse();
