@@ -587,3 +587,505 @@ Based on exploration, I recommend:
    - Need virtualized list component for large datasets
 
 *Parallel Instance #1 Addendum - 2026-01-19*
+
+---
+
+## 9. TUI Screen Mockups (ASCII)
+
+*Instance #1 (run 1, grimoire-v1) - Visual design exploration*
+
+### Main Browse View
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE                                              [?] Help  [q] Quit │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  🔍 Search: _                                        [/] Focus   [Esc] Clear │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ▸ git push origin main                                              2h ago │
+│    ✏️  "Deploy latest changes to production"              [git] [deploy]    │
+│                                                                              │
+│    docker compose up -d                                              5h ago │
+│    ✏️  "Start local dev environment"                      [docker] [dev]    │
+│                                                                              │
+│    ssh hetzner 'curl -s -X POST...'                                 12h ago │
+│    (no annotation)                                        [ssh] [mandrel]   │
+│                                                                              │
+│    npm run build                                                     1d ago │
+│    ✏️  "Build for production"                             [npm] [build]     │
+│                                                                              │
+│    psql -d aidis_production -c "SELECT..."                           2d ago │
+│    (no annotation)                                                          │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ↑↓ Navigate   Enter Detail   a Annotate   t Tag   ★ Favorite   / Search    │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Command Detail View
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE > Command Detail                           [Esc] Back  [q] Quit │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Command:                                                                    │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │ git push origin main                                                   │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+│  First seen:    2026-01-15 14:32:01                                          │
+│  Last run:      2026-01-19 16:45:23                                          │
+│  Run count:     47 times                                                     │
+│  Source:        bash_history                                                 │
+│                                                                              │
+│  ┌─ Annotation ─────────────────────────────────────────────────────────┐    │
+│  │ Deploy latest changes to production. Make sure CI passes first!      │    │
+│  │ Be careful with this on Friday afternoons.                           │    │
+│  └──────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  Tags: [git] [deploy] [production] [caution]                                 │
+│                                                                              │
+│  ★ Favorited                                                                 │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  e Edit annotation   t Edit tags   ★ Toggle favorite   y Copy   x Run        │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Search Results View
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE                                              [?] Help  [q] Quit │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  🔍 Search: docker█                                  [Tab] Filters  [Esc] ×  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Showing 23 results for "docker"                              Sort: Recent ▾ │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ▸ docker compose up -d                                    ★        5h ago  │
+│    "Start local dev environment"                                             │
+│                                                                              │
+│    docker build -t myapp:latest .                                   12h ago  │
+│    "Build production image"                                                  │
+│                                                                              │
+│    docker exec -it postgres_dev psql                                 1d ago  │
+│    (no annotation)                                                           │
+│                                                                              │
+│    docker logs -f mandrel-mcp                                        2d ago  │
+│    "Debug MCP server issues"                                                 │
+│                                                                              │
+│    docker system prune -af                                           5d ago  │
+│    "Clean up disk space - removes ALL unused images!"                        │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ↑↓ Navigate   Enter Detail   Tab Filters   Esc Clear search                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Annotation Editor (Inline Modal)
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE                                              [?] Help  [q] Quit │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│    git push origin main                                              2h ago  │
+│  ╔══════════════════════════════════════════════════════════════════════════╗│
+│  ║  Edit Annotation                                                         ║│
+│  ║                                                                          ║│
+│  ║  ┌────────────────────────────────────────────────────────────────────┐  ║│
+│  ║  │ Deploy latest changes to production. Make sure CI passes first!█  │  ║│
+│  ║  │                                                                    │  ║│
+│  ║  │                                                                    │  ║│
+│  ║  └────────────────────────────────────────────────────────────────────┘  ║│
+│  ║                                                                          ║│
+│  ║  [Enter] Save   [Esc] Cancel                                             ║│
+│  ╚══════════════════════════════════════════════════════════════════════════╝│
+│                                                                              │
+│    docker compose up -d                                              5h ago  │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Editing annotation...                                                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Design Rationale
+
+**Spell Book Metaphor**:
+- 📖 emoji in header reinforces "grimoire" branding
+- Commands are "spells" you've cast
+- Annotations are personal notes in the margins
+- Favorites mark your most important incantations
+
+**Information Hierarchy**:
+1. Command text (most prominent)
+2. Annotation (personal context)
+3. Tags (quick categorization)
+4. Metadata (timestamp, frequency)
+
+**Color Scheme** (for implementation):
+- Command text: bright white (bold)
+- Annotations: cyan (stands out, but softer)
+- Tags: dim magenta (visual markers, not distracting)
+- Timestamps: dim gray (metadata, background)
+- Search matches: yellow highlight
+- Favorites: yellow star
+
+---
+
+## 10. Keyboard Shortcut Conventions
+
+### Research: TUI Standard Patterns
+
+**Vim-style navigation** (widely expected):
+- `j/k` or `↓/↑` - Move down/up
+- `g/G` - Jump to top/bottom
+- `/` - Enter search mode
+- `n/N` - Next/previous search result
+- `Esc` - Cancel/back/clear
+
+**Common TUI shortcuts** (from htop, less, fzf, lazygit):
+- `q` - Quit
+- `?` - Help
+- `Enter` - Select/confirm
+- `Tab` - Switch focus/panels
+- `Space` - Toggle selection
+
+**Editor conventions**:
+- `e` - Edit
+- `a` - Add/annotate
+- `d` - Delete
+- `y` - Copy (yank)
+- `p` - Paste
+
+### Proposed Grimoire Shortcuts
+
+**Global (always available)**:
+| Key | Action | Rationale |
+|-----|--------|-----------|
+| `q` | Quit | Universal TUI convention |
+| `?` | Show help | Common in TUI apps |
+| `Esc` | Back/cancel/clear | Universal escape hatch |
+| `Ctrl+C` | Exit | Terminal standard |
+
+**Browse Mode**:
+| Key | Action | Rationale |
+|-----|--------|-----------|
+| `↑/↓` or `j/k` | Navigate list | Vim + arrow keys |
+| `Enter` | View details | Selection confirmation |
+| `/` | Focus search | Vim search pattern |
+| `g` | Jump to top | Vim convention |
+| `G` | Jump to bottom | Vim convention |
+| `f` | Toggle favorite | 'f' for favorite |
+| `a` | Add/edit annotation | 'a' for annotate |
+| `t` | Edit tags | 't' for tags |
+| `y` | Copy command | Vim yank |
+| `x` | Execute command | 'x' for execute |
+
+**Search Mode**:
+| Key | Action | Rationale |
+|-----|--------|-----------|
+| Type | Filter results | Immediate feedback |
+| `Enter` | Exit search, keep filter | Confirm search |
+| `Esc` | Clear search, exit mode | Cancel |
+| `Tab` | Open filter menu | Secondary action |
+| `↑/↓` | Navigate while searching | Keep browsing |
+
+**Detail View**:
+| Key | Action | Rationale |
+|-----|--------|-----------|
+| `Esc` | Back to list | Return |
+| `e` | Edit annotation | 'e' for edit |
+| `t` | Edit tags | Consistent |
+| `y` | Copy command | Consistent |
+| `x` | Execute | Consistent |
+
+### Conflicts to Avoid
+
+- Don't use `Ctrl+L` (terminal clear)
+- Don't use `Ctrl+Z` (suspend)
+- Don't use `Ctrl+D` (EOF)
+- Be careful with letters that might be typed in search
+
+### Implementation Note
+
+Use `useInput` hook with conditional logic:
+```typescript
+useInput((input, key) => {
+  // Global shortcuts always work
+  if (input === 'q') return exit();
+  if (input === '?') return showHelp();
+
+  // Mode-specific shortcuts
+  if (mode === 'browse') {
+    if (input === '/') return enterSearchMode();
+    if (input === 'j' || key.downArrow) return selectNext();
+    // ...
+  } else if (mode === 'search') {
+    if (key.escape) return exitSearchMode();
+    // Search input handled separately
+  }
+});
+```
+
+---
+
+## 11. Parser Validation Findings
+
+### Actual Bash History Analysis (This System)
+
+Tested parsing `/home/ridgetop/.bash_history`:
+
+**Statistics**:
+- Total lines: 2000
+- File size: 60704 bytes
+- Detected as "data" by file command (contains binary)
+
+**Edge Cases Found**:
+
+1. **Terminal Escape Sequences**:
+   ```
+   35;7;1M35;8;1M35;9;2M35;10;2M...
+   ```
+   These are mouse escape codes that leaked into history. Need regex filter:
+   ```typescript
+   const ESCAPE_PATTERN = /\x1b\[[0-9;]*[a-zA-Z]|\d+;\d+;\d+M/g;
+   command = command.replace(ESCAPE_PATTERN, '');
+   ```
+
+2. **Multi-line Script Fragments**:
+   Found inline shell scripts that span multiple lines (heredocs, for loops).
+   These appear as separate history entries but belong together.
+   Detection: Line starts with whitespace, ends with `;` or `\`
+
+3. **Very Long Commands** (>1000 chars):
+   Some commands are embedded scripts with escaped newlines.
+   Example: git sync script with JSON construction inline.
+   Strategy: Store full, truncate for display with "..." indicator.
+
+4. **Empty/Whitespace Lines**:
+   Some lines are just whitespace or empty after trim.
+   Filter: Skip lines where `trim().length < 2`.
+
+5. **Comments Starting with #**:
+   `#!/bin/bash` shebang lines in history from pasted scripts.
+   These are valid commands (user typed them), keep them.
+
+6. **Typos and Invalid Commands**:
+   `cd..` (missing space), `cd rid` (incomplete).
+   These are valid history entries - user's journey includes mistakes.
+
+### Proposed Parser Algorithm
+
+```typescript
+interface ParsedCommand {
+  command: string;
+  timestamp?: number;  // Unix timestamp if available
+  lineNumber: number;  // For debugging/incremental import
+}
+
+function parseBashHistory(content: string): ParsedCommand[] {
+  const lines = content.split('\n');
+  const commands: ParsedCommand[] = [];
+  let pendingMultiline = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Check for HISTTIMEFORMAT timestamp
+    const timestampMatch = line.match(/^#(\d+)$/);
+    if (timestampMatch && i + 1 < lines.length) {
+      const command = cleanCommand(lines[++i]);
+      if (isValidCommand(command)) {
+        commands.push({
+          command,
+          timestamp: parseInt(timestampMatch[1]),
+          lineNumber: i
+        });
+      }
+      continue;
+    }
+
+    // Handle multi-line continuation
+    if (line.endsWith('\\')) {
+      pendingMultiline += line.slice(0, -1) + ' ';
+      continue;
+    }
+
+    if (pendingMultiline) {
+      line = pendingMultiline + line;
+      pendingMultiline = '';
+    }
+
+    const command = cleanCommand(line);
+    if (isValidCommand(command)) {
+      commands.push({ command, lineNumber: i });
+    }
+  }
+
+  return commands;
+}
+
+function cleanCommand(line: string): string {
+  // Remove terminal escape sequences
+  let cleaned = line.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+  // Remove mouse escape codes (CSI sequences)
+  cleaned = cleaned.replace(/\d+;\d+;\d+M/g, '');
+  // Trim whitespace
+  return cleaned.trim();
+}
+
+function isValidCommand(cmd: string): boolean {
+  if (cmd.length < 2) return false;
+  // Filter out binary garbage (non-printable chars > 10% of string)
+  const nonPrintable = cmd.split('').filter(c =>
+    c.charCodeAt(0) < 32 || c.charCodeAt(0) > 126
+  );
+  if (nonPrintable.length > cmd.length * 0.1) return false;
+  return true;
+}
+```
+
+### Zsh History Parser (Pseudo)
+
+```typescript
+function parseZshHistory(content: string): ParsedCommand[] {
+  const lines = content.split('\n');
+  return lines
+    .map((line, i) => {
+      // Format: : TIMESTAMP:ELAPSED;COMMAND
+      const match = line.match(/^: (\d+):\d+;(.*)$/);
+      if (match) {
+        return {
+          command: cleanCommand(match[2]),
+          timestamp: parseInt(match[1]),
+          lineNumber: i
+        };
+      }
+      return null;
+    })
+    .filter((cmd): cmd is ParsedCommand =>
+      cmd !== null && isValidCommand(cmd.command)
+    );
+}
+```
+
+---
+
+## 12. Additional Considerations
+
+### XDG Base Directory Specification
+
+For Linux/macOS compatibility, use XDG paths:
+
+```typescript
+function getDataDir(): string {
+  const xdgDataHome = process.env.XDG_DATA_HOME ||
+                      path.join(os.homedir(), '.local', 'share');
+  return path.join(xdgDataHome, 'grimoire');
+}
+
+function getConfigDir(): string {
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME ||
+                        path.join(os.homedir(), '.config');
+  return path.join(xdgConfigHome, 'grimoire');
+}
+
+// Database: ~/.local/share/grimoire/grimoire.db
+// Config:   ~/.config/grimoire/config.json
+```
+
+### Privacy Considerations
+
+**Sensitive Command Patterns** to warn about or exclude:
+- Contains `password=`, `token=`, `secret=`
+- Contains API keys (long alphanumeric strings)
+- Contains `--password`, `-p` with argument
+- SSH keys, `.pem` files
+
+```typescript
+const SENSITIVE_PATTERNS = [
+  /password[=:]\S+/i,
+  /token[=:]\S+/i,
+  /secret[=:]\S+/i,
+  /api[_-]?key[=:]\S+/i,
+  /--password\s+\S+/,
+  /-p\s+['"]?[^'"\s]+/,
+];
+
+function containsSensitive(command: string): boolean {
+  return SENSITIVE_PATTERNS.some(p => p.test(command));
+}
+```
+
+---
+
+## 13. Consolidated Open Questions
+
+From all Instance #1 explorations:
+
+### Answered/Decided:
+1. ~~Screen layout priority~~ → **Browse-first** with quick search access
+2. ~~Keyboard shortcuts~~ → **Documented** in Section 10
+3. ~~Database location~~ → **`~/.grimoire/grimoire.db`** (simple, discoverable)
+4. ~~AI API design (MVP)~~ → **File export** with `--json` flag
+
+### Still Open:
+5. **Tag system depth**: Flat tags or hierarchical categories?
+   - Recommendation: Flat tags for MVP
+6. **Import strategy**: Auto-detect shells or require explicit?
+   - Recommendation: Auto-detect with `--source` override
+7. **Inline edit vs modal edit**: Detail view shows modal, but should browse allow inline?
+8. **Run command confirmation**: Execute directly or require confirmation?
+9. **Shell integration**: Should Grimoire replace Ctrl+R or complement it?
+10. **Multi-machine sync**: Export/import JSON between machines?
+11. **Secret handling**: Pattern-based redaction or "private" flag?
+12. **Performance at scale**: 50k+ commands - need virtualized list?
+
+---
+
+## 14. Recommendations for Instance #2
+
+Instance #1 has comprehensively explored:
+- ✅ Shell history formats (bash, zsh, fish)
+- ✅ Competitive analysis (Atuin, McFly, fzf)
+- ✅ Ink framework patterns
+- ✅ SQLite schema with FTS5
+- ✅ 18+ edge cases identified
+- ✅ Architecture sketch
+- ✅ ASCII mockups for 4 TUI screens
+- ✅ Comprehensive keyboard shortcuts
+- ✅ Parser validation with real bash_history
+- ✅ XDG directory compliance
+- ✅ Privacy considerations
+
+**Next instance should**:
+
+1. **Decide remaining open questions** (Section 13, items 5-12)
+
+2. **Validate ink implementation patterns**:
+   - Create minimal ink prototype
+   - Test Box layouts, useInput handling
+   - Verify scrollable list with 1000+ items
+
+3. **Test SQLite FTS5 performance**:
+   - Create test database with schema
+   - Import sample history
+   - Benchmark search queries
+
+4. **Consider Instance 4 decision point**:
+   - Is exploration sufficient to begin CONTRACT.md?
+   - What gaps remain?
+
+5. **Assess readiness for build phase**:
+   - Technical foundation is solid
+   - UX design is clear
+   - Edge cases are documented
+   - Main question: Is the "spell book" vision fully captured?
+
+---
+
+*Instance #1 (grimoire-v1, run 1) Complete - 2026-01-19*
