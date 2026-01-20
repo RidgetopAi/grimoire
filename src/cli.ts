@@ -26,7 +26,8 @@ program
 
 // Default command: launch TUI browser
 program
-  .action(async (options: { debug?: boolean }) => {
+  .option('--no-sync', 'Skip auto-import of shell history on launch')
+  .action(async (options: { debug?: boolean; sync?: boolean }) => {
     if (options.debug) {
       console.log('Debug mode enabled');
       console.log(`Database path: ${getDatabasePath()}`);
@@ -35,6 +36,23 @@ program
     }
 
     ensureDirectories();
+
+    // Auto-import shell history before launching TUI (unless --no-sync)
+    if (options.sync !== false) {
+      const db = getDatabase(getDatabasePath());
+      try {
+        const result = await runImport(db, {}, undefined);
+        if (options.debug) {
+          console.log(`Auto-sync: ${result.totalInserted} new, ${result.totalUpdated} updated`);
+        }
+      } catch (error) {
+        // Silently continue - don't block TUI launch if import fails
+        if (options.debug) {
+          console.error('Auto-sync failed:', error);
+        }
+      }
+      closeDatabase();
+    }
 
     // Launch TUI - Welcome screen handles first-run experience
     launchTUI();
