@@ -9,6 +9,9 @@ import { Command } from 'commander';
 import { getDatabasePath, ensureDirectories, isFirstRun, getHistoryPaths } from './services/Config.js';
 import { getDatabase, closeDatabase, getCommandCount } from './db/index.js';
 import { runImport, getHistorySummary, type ShellType } from './import/index.js';
+import { runExport, type ExportFormat } from './export/index.js';
+import { calculateStats, formatStats } from './services/Stats.js';
+import { CommandStore } from './services/CommandStore.js';
 import { launchTUI } from './index.js';
 
 const VERSION = '0.1.0';
@@ -156,25 +159,81 @@ program
       process.exit(1);
     }
 
-    console.log(`Searching for: "${query}"`);
-    console.log(`Limit: ${options.limit}`);
-    if (options.tag) {
-      console.log(`Tag filter: ${options.tag}`);
+    const db = getDatabase(getDatabasePath());
+
+    try {
+      const store = new CommandStore(db);
+      const limit = parseInt(options.limit, 10);
+
+      let results;
+      if (options.tag) {
+        // Filter by tag
+        results = store.getByTag(options.tag, limit);
+        // Then filter by query if provided
+        if (query && query !== '*') {
+          results = results.filter(cmd =>
+            cmd.command.toLowerCase().includes(query.toLowerCase()) ||
+            (cmd.annotation && cmd.annotation.toLowerCase().includes(query.toLowerCase()))
+          );
+        }
+      } else {
+        // Full-text search
+        results = store.search(query, limit);
+      }
+
+      if (options.json) {
+        // JSON output
+        const output = results.map(cmd => ({
+          id: cmd.id,
+          command: cmd.command,
+          annotation: cmd.annotation,
+          tags: cmd.tags,
+          runCount: cmd.runCount,
+          lastSeen: new Date(cmd.lastSeen * 1000).toISOString(),
+          favorite: cmd.favorite,
+        }));
+        console.log(JSON.stringify(output, null, 2));
+      } else {
+        // Human-readable output
+        if (results.length === 0) {
+          console.log('No commands found matching your query.');
+        } else {
+          console.log(`Found ${results.length} command${results.length === 1 ? '' : 's'}:\n`);
+          for (const cmd of results) {
+            const truncated = cmd.command.length > 70
+              ? cmd.command.slice(0, 67) + '...'
+              : cmd.command;
+            const tags = cmd.tags && cmd.tags.length > 0
+              ? ` [${cmd.tags.join(', ')}]`
+              : '';
+            const fav = cmd.favorite ? ' *' : '';
+
+            console.log(`  ${cmd.id}. ${truncated}${tags}${fav}`);
+            if (cmd.annotation) {
+              console.log(`      ${cmd.annotation}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
     }
-    console.log();
-    console.log('Search functionality coming in Phase 3.');
   });
 
 // Stats command
 program
   .command('stats')
   .description('Show statistics about your spell book')
-  .action(async () => {
+  .option('--json', 'Output as JSON')
+  .action(async (options: { json?: boolean }) => {
     ensureDirectories();
 
     if (isFirstRun()) {
-      console.log('📖 Grimoire Statistics');
-      console.log('======================');
+      console.log('Grimoire Statistics');
+      console.log('==================');
       console.log();
       console.log('Your spell book is empty.');
       console.log('Run "grimoire import" to get started.');
@@ -182,15 +241,21 @@ program
     }
 
     const db = getDatabase(getDatabasePath());
-    const count = getCommandCount(db);
 
-    console.log('📖 Grimoire Statistics');
-    console.log('======================');
-    console.log();
-    console.log(`Total commands: ${count}`);
-    console.log();
-    console.log('Detailed statistics coming in Phase 5.');
-    closeDatabase();
+    try {
+      const stats = calculateStats(db);
+
+      if (options.json) {
+        console.log(JSON.stringify(stats, null, 2));
+      } else {
+        console.log(formatStats(stats));
+      }
+    } catch (error) {
+      console.error('Failed to calculate statistics:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
+    }
   });
 
 // Export command
@@ -200,7 +265,8 @@ program
   .option('--json', 'Export as JSON (default)')
   .option('--markdown', 'Export as Markdown')
   .option('--include-private', 'Include private commands (use with caution)')
-  .action(async (options: { json?: boolean; markdown?: boolean; includePrivate?: boolean }) => {
+  .option('--no-redact', 'Disable secret redaction (use with caution)')
+  .action(async (options: { json?: boolean; markdown?: boolean; includePrivate?: boolean; redact?: boolean }) => {
     ensureDirectories();
 
     if (isFirstRun()) {
@@ -208,13 +274,32 @@ program
       process.exit(1);
     }
 
-    const format = options.markdown ? 'markdown' : 'json';
-    console.log(`Export format: ${format}`);
-    if (options.includePrivate) {
-      console.log('Warning: Including private commands');
+    const db = getDatabase(getDatabasePath());
+
+    try {
+      const format: ExportFormat = options.markdown ? 'markdown' : 'json';
+
+      // Warn about dangerous options (to stderr so it doesn't pollute output)
+      if (options.includePrivate) {
+        console.error('Warning: Including private commands in export');
+      }
+      if (options.redact === false) {
+        console.error('Warning: Secret redaction is disabled');
+      }
+
+      const output = runExport(db, {
+        format,
+        includePrivate: options.includePrivate ?? false,
+        redactSecrets: options.redact !== false,
+      });
+
+      console.log(output);
+    } catch (error) {
+      console.error('Export failed:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
     }
-    console.log();
-    console.log('Export functionality coming in Phase 5.');
   });
 
 // Annotate command
