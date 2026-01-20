@@ -8,19 +8,23 @@
  * - Annotation (with edit capability)
  * - Tags (with edit capability)
  * - Favorite status
+ * - Private status
  */
 
 import { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
+import clipboardy from 'clipboardy';
 import type { Command } from '../services/CommandStore.js';
 
 interface DetailProps {
   command: Command;
   onBack: () => void;
   onToggleFavorite: () => void;
+  onTogglePrivate: () => void;
   onUpdateAnnotation: (annotation: string | null) => void;
   onUpdateTags: (tags: string[]) => void;
+  onExecute?: () => void;
 }
 
 type EditMode = 'none' | 'annotation' | 'tags';
@@ -55,10 +59,11 @@ function formatRelativeTime(timestamp: number): string {
   return `${Math.floor(diff / 2592000)} months ago`;
 }
 
-export function Detail({ command, onBack, onToggleFavorite, onUpdateAnnotation, onUpdateTags }: DetailProps) {
+export function Detail({ command, onBack, onToggleFavorite, onTogglePrivate, onUpdateAnnotation, onUpdateTags, onExecute }: DetailProps) {
   const [editMode, setEditMode] = useState<EditMode>('none');
   const [annotationInput, setAnnotationInput] = useState(command.annotation || '');
   const [tagsInput, setTagsInput] = useState(command.tags?.join(', ') || '');
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
   useInput((input, key) => {
     if (editMode !== 'none') {
@@ -107,8 +112,25 @@ export function Detail({ command, onBack, onToggleFavorite, onUpdateAnnotation, 
     }
 
     if (input === 'y') {
-      // Copy to clipboard - we'll just show a message for now
-      // Real clipboard support would need additional handling
+      // Copy command to clipboard
+      try {
+        clipboardy.writeSync(command.command);
+        setCopyMessage('Copied to clipboard!');
+        setTimeout(() => setCopyMessage(null), 2000);
+      } catch {
+        setCopyMessage('Failed to copy');
+        setTimeout(() => setCopyMessage(null), 2000);
+      }
+      return;
+    }
+
+    if (input === 'p') {
+      onTogglePrivate();
+      return;
+    }
+
+    if (input === 'x' && onExecute) {
+      onExecute();
       return;
     }
   });
@@ -201,13 +223,26 @@ export function Detail({ command, onBack, onToggleFavorite, onUpdateAnnotation, 
           ) : (
             <Text dimColor>☆ Not favorited</Text>
           )}
+          <Text>  </Text>
+          {command.private ? (
+            <Text color="red">🔒 Private (excluded from export)</Text>
+          ) : (
+            <Text dimColor>🔓 Public</Text>
+          )}
         </Box>
+
+        {/* Copy message */}
+        {copyMessage && (
+          <Box marginBottom={1}>
+            <Text color="green">✓ {copyMessage}</Text>
+          </Box>
+        )}
       </Box>
 
       {/* Footer */}
       <Box borderStyle="single" paddingX={1}>
         <Text dimColor>
-          e/a Edit annotation   t Edit tags   f Toggle favorite   y Copy   Esc Back
+          e/a Annotation   t Tags   f Fav   p Private   y Copy   x Execute   Esc Back
         </Text>
       </Box>
     </Box>

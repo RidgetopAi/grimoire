@@ -37,11 +37,20 @@ export function Help({ onClose }: HelpProps) {
       <Text>  Esc           Clear search</Text>
       <Text> </Text>
 
-      <Text bold>Actions:</Text>
+      <Text bold>Actions (Browse View):</Text>
       <Text>  f             Toggle favorite</Text>
-      <Text>  a / e         Add/edit annotation (in detail view)</Text>
-      <Text>  t             Edit tags (in detail view)</Text>
+      <Text>  a             Quick edit annotation</Text>
+      <Text>  t             Quick edit tags</Text>
+      <Text>  x             Execute command (with confirmation)</Text>
+      <Text> </Text>
+
+      <Text bold>Actions (Detail View):</Text>
+      <Text>  f             Toggle favorite</Text>
+      <Text>  p             Toggle private (exclude from export)</Text>
+      <Text>  a / e         Edit annotation</Text>
+      <Text>  t             Edit tags</Text>
       <Text>  y             Copy command to clipboard</Text>
+      <Text>  x             Execute command (with confirmation)</Text>
       <Text> </Text>
 
       <Text bold>General:</Text>
