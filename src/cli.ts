@@ -9,6 +9,7 @@ import { Command } from 'commander';
 import { getDatabasePath, ensureDirectories, isFirstRun, getHistoryPaths } from './services/Config.js';
 import { getDatabase, closeDatabase, getCommandCount } from './db/index.js';
 import { runImport, getHistorySummary, type ShellType } from './import/index.js';
+import { launchTUI } from './index.js';
 
 const VERSION = '0.1.0';
 
@@ -38,22 +39,11 @@ program
       console.log('Your spell book is empty. Import your command history to get started:');
       console.log('  grimoire import');
       console.log();
-      console.log('Or launch the interactive browser:');
-      console.log('  grimoire browse');
-      console.log();
       return;
     }
 
-    // TODO: Launch TUI (Phase 3)
-    const db = getDatabase(getDatabasePath());
-    const count = getCommandCount(db);
-    console.log(`📖 Grimoire - ${count} commands in your spell book`);
-    console.log();
-    console.log('TUI browser coming in Phase 3. For now, use:');
-    console.log('  grimoire search <query>  - Search commands');
-    console.log('  grimoire stats           - Show statistics');
-    console.log('  grimoire --help          - Show all commands');
-    closeDatabase();
+    // Launch TUI
+    launchTUI();
   });
 
 // Import command
