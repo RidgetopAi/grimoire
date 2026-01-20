@@ -492,3 +492,98 @@ END;
 ---
 
 *Instance #1 Complete - 2026-01-19*
+
+---
+
+## Addendum: Additional Instance #1 Findings
+
+*A parallel Instance #1 explored some overlapping areas with additional depth:*
+
+### Extended Bash History Format Details
+
+When `HISTTIMEFORMAT` is set in bash, timestamps are stored as:
+```
+#1698373801
+command1
+```
+The `#` followed by digits is interpreted as a timestamp for the following line. This is different from zsh's inline format.
+
+**Important**: Lines starting with `#` followed by a digit must be treated as metadata, not commands.
+
+### better-sqlite3 TypeScript Patterns
+
+```typescript
+import Database from 'better-sqlite3';
+
+// Initialization with WAL mode (important for performance)
+const db = new Database('grimoire.db');
+db.pragma('journal_mode = WAL');
+
+// Prepared statements for performance
+const insertCmd = db.prepare(`
+  INSERT INTO commands (command, first_seen, last_seen, source)
+  VALUES (@command, @timestamp, @timestamp, @source)
+  ON CONFLICT(command) DO UPDATE SET
+    last_seen = @timestamp,
+    run_count = run_count + 1
+`);
+
+// Transactions for bulk imports
+const importMany = db.transaction((commands) => {
+  for (const cmd of commands) {
+    insertCmd.run(cmd);
+  }
+});
+```
+
+### Key Differentiator: AI Accessibility
+
+What makes Grimoire unique is the focus on making shell history **accessible to AI assistants**:
+
+1. **MCP Integration Potential**: Could expose tools like:
+   - `grimoire_search(query)` - Search user's command history
+   - `grimoire_get_annotations(command)` - Get user's notes for a command
+
+2. **JSON Export Format** (MVP approach):
+   ```json
+   {
+     "commands": [
+       {
+         "command": "docker compose up -d",
+         "annotation": "Start all services in background",
+         "tags": ["docker", "deploy"],
+         "last_seen": "2026-01-15T10:30:00Z",
+         "run_count": 47
+       }
+     ]
+   }
+   ```
+
+3. **Use Case**: When user asks Claude "how do I deploy?", Claude can query Grimoire and find the user's actual deployment commands with their personal annotations.
+
+### Decision Recommendations
+
+Based on exploration, I recommend:
+
+1. **Full-screen TUI** - More room for the "spellbook" experience, can show annotations inline
+2. **Minimal shell integration initially** - Read-only from history files, no hooks required
+3. **Hybrid annotation scope** - Store per-command, but show when any occurrence is viewed
+4. **Database location**: `~/.grimoire/grimoire.db` (simple, discoverable)
+5. **MVP Export**: CLI with `--json` flag, defer HTTP/MCP to later
+
+### Unanswered Questions Carried Forward
+
+1. How to handle commands containing secrets (API keys, passwords)?
+   - Option: Pattern-based redaction (`--redact` flag for export)
+   - Option: Mark commands as "private" (excluded from AI export)
+
+2. Multi-machine story - how do annotations sync?
+   - Atuin solved this with E2E encrypted sync
+   - Simpler option: export/import JSON between machines
+   - Could leverage Mandrel for sync later
+
+3. Performance at scale - what happens with 50k+ commands?
+   - SQLite handles this fine, but TUI rendering may lag
+   - Need virtualized list component for large datasets
+
+*Parallel Instance #1 Addendum - 2026-01-19*
