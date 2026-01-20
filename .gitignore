@@ -21,3 +21,6 @@ Thumbs.db
 # Test/temp files
 /tmp/
 *.tmp
+
+# Coverage
+coverage/
