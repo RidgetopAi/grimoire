@@ -1201,3 +1201,245 @@ Located in `/home/ridgetop/projects/grimoire/prototypes/`:
 ---
 
 *Instance #2 (grimoire-v1, run 1) Complete - 2026-01-19*
+
+---
+
+## 16. Instance #2 (grimoire-v1, run 2) - Gap Analysis
+
+### Critical Review: What's Missing Before BUILD?
+
+After reviewing all previous exploration, I've identified several areas that need clarification before CONTRACT.md can be created.
+
+#### 16.1 Error Handling Strategy
+
+**Database errors:**
+- Locked database: Show message, retry with backoff, suggest closing other grimoire instances
+- Corrupted database: Offer backup and recreate option
+- Disk full: Graceful error with clear message
+
+**History file errors:**
+- File not found: Graceful message, create empty database, guide user
+- Permission denied: Clear error with suggestion (`chmod` or check path)
+- File locked by shell: Read current snapshot (shell writes on exit)
+
+**TUI errors:**
+- Not a TTY (piped input): Fall back to simple CLI output mode
+- Terminal too small: Show minimum size warning
+- Encoding issues: Default to UTF-8 with fallback
+
+**Parser errors:**
+- Malformed data: Log and skip, don't crash
+- Binary content: Filter out, continue processing
+- Huge commands (>10KB): Truncate for display, store full
+
+#### 16.2 First-Run Experience
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE - Welcome!                                                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Your spell book is empty. Let's fill it with your command history!         │
+│                                                                              │
+│  Found history files:                                                         │
+│    ✓ ~/.bash_history (2000 commands)                                         │
+│    ✗ ~/.zsh_history (not found)                                              │
+│                                                                              │
+│  Press [i] to import now, or [q] to quit and do it later.                    │
+│                                                                              │
+│  You can also import manually:                                               │
+│    grimoire import                                                           │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  [i] Import now   [q] Quit                                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Import progress:**
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  📖 GRIMOIRE - Importing                                                      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Importing from ~/.bash_history...                                           │
+│                                                                              │
+│  [████████████████░░░░░░░░░░░░░░░░░░░░░░░░] 42%                              │
+│                                                                              │
+│  Parsed: 840 / 2000 lines                                                    │
+│  Valid commands: 756                                                         │
+│  Duplicates merged: 312                                                      │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Please wait...                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 16.3 CLI Command Structure
+
+```
+grimoire                     # Launch TUI browser
+grimoire import              # Auto-detect and import all shell histories
+grimoire import --source bash     # Import only bash
+grimoire import --source zsh      # Import only zsh
+grimoire import --file <path>     # Import from specific file
+
+grimoire search <query>      # Quick CLI search (no TUI)
+grimoire search "git push" --limit 10
+grimoire search --tag deploy
+
+grimoire annotate <id> "note"     # Add annotation by ID
+grimoire annotate --command "git push origin main" "Deploy to prod"
+
+grimoire tag <id> <tag1> [tag2...]  # Add tags
+
+grimoire export              # Export all (JSON to stdout)
+grimoire export --json       # Same as above
+grimoire export --markdown   # Human-readable format
+grimoire export --private    # Include private commands (dangerous)
+
+grimoire stats               # Show statistics
+```
+
+#### 16.4 Configuration Options
+
+Location: `~/.config/grimoire/config.json` (XDG compliant)
+
+```json
+{
+  "database": "~/.local/share/grimoire/grimoire.db",
+  "import": {
+    "sources": ["bash", "zsh"],
+    "autoImport": false,
+    "maxCommandLength": 10000
+  },
+  "display": {
+    "commandTruncate": 80,
+    "annotationTruncate": 120,
+    "showTagsInList": true,
+    "dateFormat": "relative"
+  },
+  "export": {
+    "excludePrivate": true,
+    "redactSecrets": true,
+    "secretPatterns": [
+      "password[=:]\\S+",
+      "token[=:]\\S+",
+      "api[_-]?key[=:]\\S+"
+    ]
+  },
+  "ui": {
+    "theme": "default",
+    "vimMode": true
+  }
+}
+```
+
+**MVP**: Only `database` path is configurable. Others have sensible defaults.
+
+#### 16.5 AI Export Format (Detailed)
+
+```json
+{
+  "version": "1.0",
+  "exportedAt": "2026-01-19T16:00:00Z",
+  "totalCommands": 490,
+  "commands": [
+    {
+      "id": 1,
+      "command": "git push origin main",
+      "annotation": "Deploy to production",
+      "tags": ["git", "deploy", "production"],
+      "firstSeen": "2026-01-15T14:32:01Z",
+      "lastSeen": "2026-01-19T16:45:23Z",
+      "runCount": 47,
+      "favorite": true
+    }
+  ],
+  "statistics": {
+    "topTags": [
+      {"tag": "git", "count": 45},
+      {"tag": "docker", "count": 23}
+    ],
+    "mostUsed": [
+      {"command": "git status", "count": 234}
+    ]
+  }
+}
+```
+
+**Markdown export:**
+```markdown
+# Command History Export
+
+## Git Commands
+
+### `git push origin main`
+- **Annotation**: Deploy to production
+- **Tags**: git, deploy, production
+- **Used**: 47 times (last: 2h ago)
+- **Favorite**: ⭐
+
+### `git status`
+- **Used**: 234 times (last: 1h ago)
+```
+
+#### 16.6 Testing Strategy
+
+**Unit tests (vitest):**
+- Parser: Test with sample history files (bash, zsh, corrupted)
+- Database: Test schema, FTS5 queries, transactions
+- Config: Test defaults, overrides, validation
+
+**Integration tests:**
+- Import flow: Real history → database → search
+- Export flow: Database → JSON/Markdown
+
+**TUI tests (challenging):**
+- Use ink's testing utilities (`ink-testing-library`)
+- Test component rendering
+- Test keyboard navigation state changes
+- Manual testing checklist for release
+
+**Test data fixtures:**
+```
+tests/
+  fixtures/
+    bash_history_simple.txt       # Basic commands
+    bash_history_timestamps.txt   # With HISTTIMEFORMAT
+    bash_history_corrupted.txt    # Escape sequences
+    zsh_history_extended.txt      # Zsh format
+    edge_cases.txt                # Multiline, heredocs, etc.
+```
+
+### 16.7 Readiness Assessment (Updated)
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Problem definition | ✅ Complete | |
+| Competitive analysis | ✅ Complete | |
+| Tech stack | ✅ Decided | |
+| Architecture | ✅ Sketched | CLI commands now detailed |
+| Data model | ✅ Validated | Prototypes work |
+| UX design | ✅ Detailed | First-run added |
+| Edge cases | ✅ Documented | |
+| Parser algorithm | ✅ Validated | |
+| TUI patterns | ✅ Validated | |
+| Open questions | ✅ Decided | |
+| Error handling | ✅ Defined | New this instance |
+| First-run UX | ✅ Designed | New this instance |
+| CLI commands | ✅ Specified | New this instance |
+| Configuration | ✅ Designed | New this instance |
+| Export format | ✅ Specified | New this instance |
+| Testing strategy | ✅ Outlined | New this instance |
+
+### Conclusion
+
+The exploration phase is now **truly complete**. All technical and UX foundations are in place. Instance #3 or #4 can confidently create CONTRACT.md.
+
+**Recommendation for next instance:**
+- If Instance #3: Review this gap analysis, refine if needed, prepare for CONTRACT.md
+- If Instance #4: Create CONTRACT.md and begin implementation
+
+---
+
+*Instance #2 (grimoire-v1, run 2) Complete - 2026-01-19*
