@@ -106,24 +106,29 @@ export class CommandStore {
   /**
    * Insert or update a command
    *
-   * If command exists: update timestamps and increment run_count
+   * If command exists AND we have timestamp data: update timestamps
+   * If command exists but no timestamp: skip (no new info)
    * If command is new: insert it
    *
-   * @returns 'inserted' | 'updated'
+   * @returns 'inserted' | 'updated' | 'skipped'
    */
-  upsertCommand(input: InsertCommandInput): 'inserted' | 'updated' {
+  upsertCommand(input: InsertCommandInput): 'inserted' | 'updated' | 'skipped' {
     const now = Math.floor(Date.now() / 1000);
-    const timestamp = input.timestamp ?? now;
 
     // Check if command already exists
     const existing = this.findByCommandStmt.get(input.command) as CommandRow | undefined;
 
     if (existing) {
-      // Update existing command's timestamps
-      this.updateTimestampStmt.run(timestamp, timestamp, existing.id);
-      return 'updated';
+      // Only update if we have actual timestamp data from history file
+      // Otherwise we have no new information - skip
+      if (input.timestamp !== undefined) {
+        this.updateTimestampStmt.run(input.timestamp, input.timestamp, existing.id);
+        return 'updated';
+      }
+      return 'skipped';
     } else {
-      // Insert new command
+      // New command - use provided timestamp or now
+      const timestamp = input.timestamp ?? now;
       this.insertStmt.run(input.command, timestamp, timestamp);
       return 'inserted';
     }
@@ -149,8 +154,11 @@ export class CommandStore {
           const action = this.upsertCommand(cmd);
           if (action === 'inserted') {
             result.inserted++;
-          } else {
+          } else if (action === 'updated') {
             result.updated++;
+          } else {
+            // 'skipped' - command exists but no new timestamp info
+            result.skipped++;
           }
         } catch (error) {
           result.skipped++;

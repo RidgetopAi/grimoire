@@ -32,13 +32,26 @@ describe('CommandStore', () => {
       expect(cmd?.runCount).toBe(1);
     });
 
-    it('should update existing command on duplicate', () => {
+    it('should skip existing command without timestamp', () => {
       store.upsertCommand({ command: 'ls -la' });
       const result = store.upsertCommand({ command: 'ls -la' });
+      // Without timestamp, we have no new info - skip
+      expect(result).toBe('skipped');
+
+      const cmd = store.getByCommand('ls -la');
+      // run_count stays at 1 since we skipped
+      expect(cmd?.runCount).toBe(1);
+    });
+
+    it('should update existing command with timestamp', () => {
+      const now = Math.floor(Date.now() / 1000);
+      store.upsertCommand({ command: 'ls -la', timestamp: now - 100 });
+      const result = store.upsertCommand({ command: 'ls -la', timestamp: now });
       expect(result).toBe('updated');
 
       const cmd = store.getByCommand('ls -la');
       expect(cmd?.runCount).toBe(2);
+      expect(cmd?.lastSeen).toBe(now);
     });
 
     it('should use provided timestamp', () => {
@@ -85,8 +98,27 @@ describe('CommandStore', () => {
 
       const result = store.importCommands(commands);
       expect(result.inserted).toBe(1);
+      // Without timestamps, duplicates are skipped (no new info)
+      expect(result.skipped).toBe(2);
+      expect(store.getCount()).toBe(1);
+    });
+
+    it('should update timestamps when provided', () => {
+      const now = Math.floor(Date.now() / 1000);
+      const commands = [
+        { command: 'git status', timestamp: now - 100 },
+        { command: 'git status', timestamp: now - 50 },
+        { command: 'git status', timestamp: now },
+      ];
+
+      const result = store.importCommands(commands);
+      expect(result.inserted).toBe(1);
       expect(result.updated).toBe(2);
       expect(store.getCount()).toBe(1);
+
+      // Verify last_seen was updated to newest timestamp
+      const cmd = store.getByCommand('git status');
+      expect(cmd?.lastSeen).toBe(now);
     });
 
     it('should handle empty import', () => {
