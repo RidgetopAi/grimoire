@@ -1,0 +1,7 @@
+ls -la
+35;7;1M35;7;1M
+git status
+a
+
+npm install
+echo "valid command"

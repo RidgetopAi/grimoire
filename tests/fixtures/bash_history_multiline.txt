@@ -1,0 +1,9 @@
+ls -la
+docker run -it \
+  --name mycontainer \
+  -v /tmp:/tmp \
+  ubuntu:latest
+git status
+echo "line 1" && \
+echo "line 2"
+npm install

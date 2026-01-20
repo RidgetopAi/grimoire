@@ -1,0 +1,5 @@
+: 1704067200:0;ls -la
+: 1704067260:5;cd ~/projects
+: 1704067320:0;git status
+: 1704067380:30;npm install
+: 1704067440:0;echo "hello world"

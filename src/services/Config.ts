@@ -115,7 +115,7 @@ export function loadConfig(): GrimoireConfig {
       if (fileConfig.import) config.import = { ...config.import, ...fileConfig.import };
       if (fileConfig.display) config.display = { ...config.display, ...fileConfig.display };
       if (fileConfig.export) config.export = { ...config.export, ...fileConfig.export };
-    } catch (error) {
+    } catch {
       // If config is invalid, use defaults
       console.error(`Warning: Could not parse config file: ${configPath}`);
     }

@@ -1,0 +1,10 @@
+ls -la
+cd ~/projects
+git status
+npm install
+echo "hello world"
+cat README.md
+grep -r "pattern" .
+vim test.ts
+docker ps
+kubectl get pods

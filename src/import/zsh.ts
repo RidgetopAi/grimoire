@@ -46,7 +46,7 @@ export function parseZshHistoryContent(content: string): ParseResult {
   const extendedFormatRegex = /^: (\d+):(\d+);(.*)$/;
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
+    const line = lines[i];
 
     // Try to match extended format
     const match = line.match(extendedFormatRegex);
