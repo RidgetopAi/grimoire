@@ -8,6 +8,7 @@
 import { Command } from 'commander';
 import { getDatabasePath, ensureDirectories, isFirstRun, getHistoryPaths } from './services/Config.js';
 import { getDatabase, closeDatabase, getCommandCount } from './db/index.js';
+import { runImport, getHistorySummary, type ShellType } from './import/index.js';
 
 const VERSION = '0.1.0';
 
@@ -61,40 +62,93 @@ program
   .description('Import commands from shell history files')
   .option('--source <type>', 'Import only from specific shell (bash or zsh)')
   .option('--file <path>', 'Import from a specific file')
-  .action(async (options: { source?: string; file?: string }) => {
+  .option('--dry-run', 'Show what would be imported without making changes')
+  .action(async (options: { source?: string; file?: string; dryRun?: boolean }) => {
     ensureDirectories();
 
-    const historyPaths = getHistoryPaths();
     console.log('📖 Grimoire Import');
     console.log();
 
-    if (options.file) {
-      console.log(`Importing from: ${options.file}`);
-      // TODO: Implement file import (Phase 2)
-    } else if (options.source) {
-      const sourcePath = historyPaths[options.source as 'bash' | 'zsh'];
-      if (sourcePath) {
-        console.log(`Importing from: ${sourcePath}`);
-      } else {
-        console.error(`No ${options.source} history file found`);
-        process.exit(1);
-      }
-    } else {
-      console.log('Found history files:');
-      if (historyPaths.bash) {
-        console.log(`  ✓ ${historyPaths.bash}`);
-      }
-      if (historyPaths.zsh) {
-        console.log(`  ✓ ${historyPaths.zsh}`);
-      }
-      if (!historyPaths.bash && !historyPaths.zsh) {
-        console.log('  ✗ No history files found');
-        return;
-      }
+    // Show available history files
+    const summary = getHistorySummary();
+    for (const line of summary) {
+      console.log(line);
     }
 
-    console.log();
-    console.log('Import functionality coming in Phase 2.');
+    if (options.dryRun) {
+      console.log('Dry run mode - no changes will be made.');
+      console.log();
+    }
+
+    // Validate source option
+    if (options.source && !['bash', 'zsh'].includes(options.source)) {
+      console.error(`Invalid source: ${options.source}. Must be 'bash' or 'zsh'.`);
+      process.exit(1);
+    }
+
+    // Run the import
+    const db = getDatabase(getDatabasePath());
+
+    try {
+      const result = await runImport(
+        db,
+        {
+          source: options.source as ShellType | undefined,
+          file: options.file,
+          verbose: true,
+        },
+        (progress) => {
+          if (progress.phase === 'parsing') {
+            console.log(`Parsing ${progress.shell} history...`);
+          } else if (progress.phase === 'importing') {
+            console.log(`Importing ${progress.total} commands...`);
+          }
+        }
+      );
+
+      console.log();
+      console.log('Import Results');
+      console.log('==============');
+      console.log();
+
+      for (const source of result.sources) {
+        console.log(`${source.shell}: ${source.file}`);
+        console.log(`  Parsed:   ${source.parsed} commands`);
+        console.log(`  New:      ${source.imported.inserted}`);
+        console.log(`  Updated:  ${source.imported.updated}`);
+        if (source.imported.skipped > 0) {
+          console.log(`  Skipped:  ${source.imported.skipped}`);
+        }
+        console.log();
+      }
+
+      console.log('Total');
+      console.log('-----');
+      console.log(`  Parsed:   ${result.totalParsed}`);
+      console.log(`  New:      ${result.totalInserted}`);
+      console.log(`  Updated:  ${result.totalUpdated}`);
+
+      if (result.errors.length > 0) {
+        console.log();
+        console.log('Errors:');
+        for (const error of result.errors.slice(0, 5)) {
+          console.log(`  - ${error}`);
+        }
+        if (result.errors.length > 5) {
+          console.log(`  ... and ${result.errors.length - 5} more errors`);
+        }
+      }
+
+      const totalCommands = getCommandCount(db);
+      console.log();
+      console.log(`Your spell book now contains ${totalCommands} commands.`);
+
+    } catch (error) {
+      console.error('Import failed:', error);
+      process.exit(1);
+    } finally {
+      closeDatabase();
+    }
   });
 
 // Search command
