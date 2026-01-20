@@ -343,6 +343,15 @@ program
     }
   });
 
+// MCP command - run as MCP server
+program
+  .command('mcp')
+  .description('Run as a Model Context Protocol (MCP) server for AI assistants')
+  .action(async () => {
+    const { runMcpServer } = await import('./mcp/index.js');
+    await runMcpServer();
+  });
+
 // Tag command
 program
   .command('tag <id> <tags...>')

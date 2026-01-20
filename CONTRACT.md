@@ -317,12 +317,19 @@ Total Commands: 490
 - **Used**: 234 times (last: 1h ago)
 ```
 
-### Future: MCP Integration
+### MCP Integration (Implemented)
 
-Deferred to later phase. Proposed design:
-- `grimoire_search(query)` - Search user's commands
-- `grimoire_get_annotations(command)` - Get user's notes
-- `grimoire_suggest(context)` - Suggest relevant commands
+Grimoire includes an MCP server (`src/mcp/index.ts`) exposing the following tools:
+
+| Tool | Description |
+|------|-------------|
+| `grimoire_search` | Search commands by query, tag, favorites, or get recent |
+| `grimoire_get_command` | Get detailed info about a command by ID |
+| `grimoire_stats` | Get command history statistics |
+| `grimoire_annotate` | Add/update annotation on a command |
+| `grimoire_add_tags` | Add tags to a command |
+
+Run with: `grimoire mcp` or `grimoire-mcp`
 
 ---
 

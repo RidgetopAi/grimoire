@@ -195,6 +195,68 @@ Grimoire automatically detects and redacts potential secrets in exports:
 
 Disable redaction with `--no-redact` (use with caution).
 
+## AI Integration (MCP)
+
+Grimoire includes a Model Context Protocol (MCP) server that allows AI assistants like Claude to query your command history. This is the key differentiator - making your CLI knowledge accessible to AI tools that help you.
+
+### Running the MCP Server
+
+```bash
+# Run as MCP server (stdio transport)
+grimoire mcp
+
+# Or use the dedicated binary
+grimoire-mcp
+```
+
+### Configure in Claude Desktop
+
+Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "grimoire": {
+      "command": "node",
+      "args": ["/path/to/grimoire/dist/mcp-server.js"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "grimoire": {
+      "command": "grimoire-mcp"
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `grimoire_search` | Search commands by query, tag, or get recent commands |
+| `grimoire_get_command` | Get detailed information about a specific command by ID |
+| `grimoire_stats` | Get statistics about your command history |
+| `grimoire_annotate` | Add or update an annotation for a command |
+| `grimoire_add_tags` | Add tags to a command for categorization |
+
+### Example Prompts
+
+Once configured, you can ask Claude:
+
+- "What git commands have I used recently?"
+- "Find commands related to Docker deployment"
+- "What's my most frequently used command?"
+- "Add an annotation to command #42 explaining what it does"
+
+The AI can search your command history, understand your workflow patterns, and help you remember or improve commands you've used before.
+
 ## Requirements
 
 - Node.js 18+
@@ -223,6 +285,7 @@ npm run build
 - **Database**: better-sqlite3 with FTS5 full-text search
 - **CLI**: Commander
 - **Styling**: Chalk
+- **MCP**: @modelcontextprotocol/sdk
 
 ## License
 
