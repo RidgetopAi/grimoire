@@ -133,9 +133,16 @@ export async function runImport(
       });
 
       // Import commands to database
-      const importInput = parseResult.commands.map(cmd => ({
+      // For shells without timestamps (bash), use position-based synthetic timestamps
+      // Later commands in file = more recent = higher timestamp
+      const now = Math.floor(Date.now() / 1000);
+      const commandCount = parseResult.commands.length;
+
+      const importInput = parseResult.commands.map((cmd, index) => ({
         command: cmd.command,
-        timestamp: cmd.timestamp,
+        // Use actual timestamp if available, otherwise derive from position
+        // Position 0 = oldest (now - commandCount), last = newest (now)
+        timestamp: cmd.timestamp ?? (now - commandCount + index),
       }));
 
       const importResult = store.importCommands(importInput);

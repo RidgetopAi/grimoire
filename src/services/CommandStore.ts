@@ -119,13 +119,11 @@ export class CommandStore {
     const existing = this.findByCommandStmt.get(input.command) as CommandRow | undefined;
 
     if (existing) {
-      // Only update if we have actual timestamp data from history file
-      // Otherwise we have no new information - skip
-      if (input.timestamp !== undefined) {
-        this.updateTimestampStmt.run(input.timestamp, input.timestamp, existing.id);
-        return 'updated';
-      }
-      return 'skipped';
+      // Update timestamps - use provided timestamp or current time
+      // For bash (no timestamps), using 'now' reflects the command is in recent history
+      const timestamp = input.timestamp ?? now;
+      this.updateTimestampStmt.run(timestamp, timestamp, existing.id);
+      return 'updated';
     } else {
       // New command - use provided timestamp or now
       const timestamp = input.timestamp ?? now;
